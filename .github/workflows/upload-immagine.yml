@@ -1,0 +1,94 @@
+name: Carica immagine da BotGhost
+
+on:
+  repository_dispatch:
+    types: [upload_immagine]
+
+permissions:
+  contents: write
+
+jobs:
+  carica-immagine:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scarica repository
+        uses: actions/checkout@v4
+
+      - name: Scarica e rinomina immagine
+        env:
+          IMAGE_URL: ${{ github.event.client_payload.immagine }}
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          set -e
+
+          echo "Numero ricevuto: $NUMERO"
+          echo "Download immagine..."
+
+          # Accetta solamente numeri
+          if [[ ! "$NUMERO" =~ ^[0-9]+$ ]]; then
+            echo "ERRORE: numero non valido"
+            exit 1
+          fi
+
+          # Scarica temporaneamente l'immagine
+          curl -fL "$IMAGE_URL" -o immagine_temp
+
+          # Rileva il tipo reale dell'immagine
+          TIPO=$(file --mime-type -b immagine_temp)
+
+          case "$TIPO" in
+            image/png)
+              EXT="png"
+              ;;
+            image/jpeg)
+              EXT="jpg"
+              ;;
+            image/webp)
+              EXT="webp"
+              ;;
+            image/gif)
+              EXT="gif"
+              ;;
+            image/avif)
+              EXT="avif"
+              ;;
+            *)
+              echo "ERRORE: formato immagine non supportato: $TIPO"
+              rm -f immagine_temp
+              exit 1
+              ;;
+          esac
+
+          echo "Formato rilevato: $EXT"
+
+          # Se esiste già un'immagine con questo numero,
+          # la elimina anche se aveva un'altra estensione
+          rm -f "${NUMERO}.png"
+          rm -f "${NUMERO}.jpg"
+          rm -f "${NUMERO}.jpeg"
+          rm -f "${NUMERO}.webp"
+          rm -f "${NUMERO}.gif"
+          rm -f "${NUMERO}.avif"
+
+          # Rinomina l'immagine
+          mv immagine_temp "${NUMERO}.${EXT}"
+
+          echo "Immagine salvata come: ${NUMERO}.${EXT}"
+
+      - name: Salva immagine nel repository
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica da salvare."
+            exit 0
+          fi
+
+          git commit -m "Caricata immagine ${NUMERO}"
+          git push
