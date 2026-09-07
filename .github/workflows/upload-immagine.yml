@@ -1,4 +1,4 @@
-name: Carica immagine da BotGhost
+name: Carica immagine da ZeroTwo
 
 on:
   repository_dispatch:
@@ -15,6 +15,29 @@ jobs:
       - name: Scarica repository
         uses: actions/checkout@v4
 
+      - name: Controlla numero foto
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import sys
+
+          numero = int(os.environ["NUMERO"])
+
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
+
+          foto = next((x for x in dati if int(x["numero"]) == numero), None)
+
+          if foto is None:
+              print(f"ERRORE: foto numero {numero} non presente in lista-foto.json")
+              sys.exit(1)
+
+          print(f'Foto trovata: {numero}. {foto["nome"]} ({foto["tipo"]})')
+          PY
+
       - name: Scarica e rinomina immagine
         env:
           IMAGE_URL: ${{ github.event.client_payload.immagine }}
@@ -22,19 +45,13 @@ jobs:
         run: |
           set -e
 
-          echo "Numero ricevuto: $NUMERO"
-          echo "Download immagine..."
-
-          # Accetta solamente numeri
           if [[ ! "$NUMERO" =~ ^[0-9]+$ ]]; then
             echo "ERRORE: numero non valido"
             exit 1
           fi
 
-          # Scarica temporaneamente l'immagine
           curl -fL "$IMAGE_URL" -o immagine_temp
 
-          # Rileva il tipo reale dell'immagine
           TIPO=$(file --mime-type -b immagine_temp)
 
           case "$TIPO" in
@@ -54,16 +71,12 @@ jobs:
               EXT="avif"
               ;;
             *)
-              echo "ERRORE: formato immagine non supportato: $TIPO"
+              echo "ERRORE: formato non supportato: $TIPO"
               rm -f immagine_temp
               exit 1
               ;;
           esac
 
-          echo "Formato rilevato: $EXT"
-
-          # Se esiste già un'immagine con questo numero,
-          # la elimina anche se aveva un'altra estensione
           rm -f "${NUMERO}.png"
           rm -f "${NUMERO}.jpg"
           rm -f "${NUMERO}.jpeg"
@@ -71,12 +84,57 @@ jobs:
           rm -f "${NUMERO}.gif"
           rm -f "${NUMERO}.avif"
 
-          # Rinomina l'immagine
           mv immagine_temp "${NUMERO}.${EXT}"
 
-          echo "Immagine salvata come: ${NUMERO}.${EXT}"
+          echo "Immagine salvata come ${NUMERO}.${EXT}"
 
-      - name: Salva immagine nel repository
+      - name: Aggiorna lista foto
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+
+          numero = int(os.environ["NUMERO"])
+
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
+
+          for foto in dati:
+              if int(foto["numero"]) == numero:
+                  foto["caricata"] = True
+
+          with open("lista-foto.json", "w", encoding="utf-8") as f:
+              json.dump(dati, f, ensure_ascii=False, indent=2)
+
+          verticali = sorted(
+              [x for x in dati if x["tipo"].lower() == "verticale"],
+              key=lambda x: int(x["numero"])
+          )
+
+          orizzontali = sorted(
+              [x for x in dati if x["tipo"].lower() == "orizzontale"],
+              key=lambda x: int(x["numero"])
+          )
+
+          with open("LISTA_FOTO.md", "w", encoding="utf-8") as f:
+              f.write("# FOTO VERTICALI\n\n")
+              for foto in verticali:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+                  f.write(f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n')
+
+              f.write("---\n\n")
+
+              f.write("# FOTO ORIZZONTALI\n\n")
+              for foto in orizzontali:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+                  f.write(f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n')
+
+          print("Lista aggiornata.")
+          PY
+
+      - name: Salva modifiche nel repository
         env:
           NUMERO: ${{ github.event.client_payload.numero }}
         run: |
@@ -86,9 +144,9 @@ jobs:
           git add -A
 
           if git diff --cached --quiet; then
-            echo "Nessuna modifica da salvare."
+            echo "Nessuna modifica."
             exit 0
           fi
 
-          git commit -m "Caricata immagine ${NUMERO}"
+          git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
           git push
