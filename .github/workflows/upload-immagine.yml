@@ -134,16 +134,12 @@ jobs:
           print("Lista aggiornata.")
           PY
 
-      - name: Aggiorna lista su Discord
+            - name: Aggiorna lista su Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           python3 <<'PY'
           import json
-          import os
-          import urllib.request
-
-          webhook = os.environ["DISCORD_WEBHOOK_URL"]
 
           with open("lista-foto.json", "r", encoding="utf-8") as f:
               dati = json.load(f)
@@ -163,7 +159,6 @@ jobs:
 
               for foto in lista:
                   stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-
                   righe.append(
                       f'{foto["numero"]}. {foto["nome"]} = {stato}'
                   )
@@ -184,52 +179,79 @@ jobs:
               ]
           }
 
-          # Se abbiamo già l'ID del messaggio, lo aggiorniamo
-          if os.path.exists("discord-message-id.txt"):
+          with open("discord-payload.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False)
 
-              with open("discord-message-id.txt", "r") as f:
-                  message_id = f.read().strip()
-
-              url = f"{webhook}/messages/{message_id}"
-
-              request = urllib.request.Request(
-                  url,
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={
-                      "Content-Type": "application/json"
-                  },
-                  method="PATCH"
-              )
-
-              with urllib.request.urlopen(request) as response:
-                  print("Messaggio Discord aggiornato.")
-
-          # Prima esecuzione: crea il messaggio
-          else:
-
-              url = webhook + "?wait=true"
-
-              request = urllib.request.Request(
-                  url,
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={
-                      "Content-Type": "application/json"
-                  },
-                  method="POST"
-              )
-
-              with urllib.request.urlopen(request) as response:
-                  risposta = json.loads(
-                      response.read().decode("utf-8")
-                  )
-
-              message_id = risposta["id"]
-
-              with open("discord-message-id.txt", "w") as f:
-                  f.write(message_id)
-
-              print("Creato nuovo messaggio Discord:", message_id)
           PY
+
+          # Se esiste già il messaggio Discord lo modifica
+          if [ -f discord-message-id.txt ]; then
+
+            MESSAGE_ID=$(cat discord-message-id.txt)
+
+            echo "Aggiorno messaggio Discord: $MESSAGE_ID"
+
+            HTTP_CODE=$(curl \
+              -sS \
+              -o discord-response.txt \
+              -w "%{http_code}" \
+              -X PATCH \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: GitHubActions-ListaFoto/1.0" \
+              --data-binary @discord-payload.json \
+              "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}")
+
+            echo "Discord HTTP: $HTTP_CODE"
+            cat discord-response.txt || true
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "ERRORE aggiornamento messaggio Discord"
+              exit 1
+            fi
+
+          # Se non esiste ancora, crea il primo messaggio
+          else
+
+            echo "Creo il messaggio lista su Discord..."
+
+            HTTP_CODE=$(curl \
+              -sS \
+              -o discord-response.json \
+              -w "%{http_code}" \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: GitHubActions-ListaFoto/1.0" \
+              --data-binary @discord-payload.json \
+              "${DISCORD_WEBHOOK_URL}?wait=true")
+
+            echo "Discord HTTP: $HTTP_CODE"
+
+            cat discord-response.json || true
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "ERRORE creazione messaggio Discord"
+              exit 1
+            fi
+
+            python3 <<'PY'
+          import json
+
+          with open("discord-response.json", "r", encoding="utf-8") as f:
+              risposta = json.load(f)
+
+          message_id = risposta["id"]
+
+          with open("discord-message-id.txt", "w", encoding="utf-8") as f:
+              f.write(message_id)
+
+          print("ID messaggio Discord salvato:", message_id)
+          PY
+
+          fi
+
+          rm -f discord-payload.json
+          rm -f discord-response.txt
+          rm -f discord-response.json
 
       - name: Salva modifiche nel repository
         env:
