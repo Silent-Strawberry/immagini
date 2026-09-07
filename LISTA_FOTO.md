@@ -46,7 +46,7 @@
 
 # FOTO ORIZZONTALI
 
-1. foto 1 = ❌ non caricata
+1. foto 1 = ✅ caricata
 
 4. foto 4 = ❌ non caricata
 
