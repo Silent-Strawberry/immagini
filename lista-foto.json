@@ -1,42 +1,242 @@
 [
-  { "numero": 1, "nome": "foto 1", "tipo": "orizzontale", "caricata": false },
-  { "numero": 2, "nome": "foto 2", "tipo": "verticale", "caricata": false },
-  { "numero": 3, "nome": "foto 3", "tipo": "verticale", "caricata": false },
-  { "numero": 4, "nome": "foto 4", "tipo": "orizzontale", "caricata": false },
-  { "numero": 5, "nome": "foto 5", "tipo": "verticale", "caricata": false },
-  { "numero": 6, "nome": "foto 6", "tipo": "verticale", "caricata": false },
-  { "numero": 7, "nome": "foto 7", "tipo": "orizzontale", "caricata": false },
-  { "numero": 8, "nome": "foto 8", "tipo": "verticale", "caricata": false },
-  { "numero": 9, "nome": "foto 9", "tipo": "verticale", "caricata": false },
-  { "numero": 10, "nome": "foto 10", "tipo": "orizzontale", "caricata": false },
-  { "numero": 11, "nome": "foto 11", "tipo": "orizzontale", "caricata": false },
-  { "numero": 12, "nome": "foto 12", "tipo": "verticale", "caricata": false },
-  { "numero": 13, "nome": "foto 13", "tipo": "verticale", "caricata": false },
-  { "numero": 14, "nome": "foto 14", "tipo": "orizzontale", "caricata": false },
-  { "numero": 15, "nome": "foto 15", "tipo": "orizzontale", "caricata": false },
-  { "numero": 16, "nome": "foto 16", "tipo": "orizzontale", "caricata": false },
-  { "numero": 17, "nome": "foto 17", "tipo": "orizzontale", "caricata": false },
-  { "numero": 18, "nome": "foto 18", "tipo": "orizzontale", "caricata": false },
-  { "numero": 19, "nome": "foto 19", "tipo": "orizzontale", "caricata": false },
-  { "numero": 20, "nome": "foto 20", "tipo": "verticale", "caricata": false },
-  { "numero": 21, "nome": "foto 21", "tipo": "verticale", "caricata": false },
-  { "numero": 22, "nome": "foto 22", "tipo": "verticale", "caricata": false },
-  { "numero": 23, "nome": "foto 23", "tipo": "verticale", "caricata": false },
-  { "numero": 24, "nome": "foto 24", "tipo": "orizzontale", "caricata": false },
-  { "numero": 25, "nome": "foto 25", "tipo": "orizzontale", "caricata": false },
-  { "numero": 26, "nome": "foto 26", "tipo": "verticale", "caricata": false },
-  { "numero": 27, "nome": "foto 27", "tipo": "verticale", "caricata": false },
-  { "numero": 28, "nome": "foto 28", "tipo": "verticale", "caricata": false },
-  { "numero": 29, "nome": "foto 29", "tipo": "orizzontale", "caricata": false },
-  { "numero": 30, "nome": "foto 30", "tipo": "verticale", "caricata": false },
-  { "numero": 31, "nome": "foto 31", "tipo": "verticale", "caricata": false },
-  { "numero": 32, "nome": "foto 32", "tipo": "verticale", "caricata": false },
-  { "numero": 33, "nome": "foto 33", "tipo": "verticale", "caricata": false },
-  { "numero": 34, "nome": "foto 34", "tipo": "verticale", "caricata": false },
-  { "numero": 35, "nome": "foto 35", "tipo": "verticale", "caricata": false },
-  { "numero": 36, "nome": "foto 36", "tipo": "orizzontale", "caricata": false },
-  { "numero": 37, "nome": "foto 37", "tipo": "orizzontale", "caricata": false },
-  { "numero": 38, "nome": "foto 38", "tipo": "orizzontale", "caricata": false },
-  { "numero": 39, "nome": "foto 39", "tipo": "orizzontale", "caricata": false },
-  { "numero": 40, "nome": "foto 40", "tipo": "orizzontale", "caricata": false }
+  {
+    "numero": 1,
+    "nome": "foto 1",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 2,
+    "nome": "foto 2",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 3,
+    "nome": "foto 3",
+    "tipo": "verticale",
+    "caricata": true
+  },
+  {
+    "numero": 4,
+    "nome": "foto 4",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 5,
+    "nome": "foto 5",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 6,
+    "nome": "foto 6",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 7,
+    "nome": "foto 7",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 8,
+    "nome": "foto 8",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 9,
+    "nome": "foto 9",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 10,
+    "nome": "foto 10",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 11,
+    "nome": "foto 11",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 12,
+    "nome": "foto 12",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 13,
+    "nome": "foto 13",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 14,
+    "nome": "foto 14",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 15,
+    "nome": "foto 15",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 16,
+    "nome": "foto 16",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 17,
+    "nome": "foto 17",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 18,
+    "nome": "foto 18",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 19,
+    "nome": "foto 19",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 20,
+    "nome": "foto 20",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 21,
+    "nome": "foto 21",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 22,
+    "nome": "foto 22",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 23,
+    "nome": "foto 23",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 24,
+    "nome": "foto 24",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 25,
+    "nome": "foto 25",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 26,
+    "nome": "foto 26",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 27,
+    "nome": "foto 27",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 28,
+    "nome": "foto 28",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 29,
+    "nome": "foto 29",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 30,
+    "nome": "foto 30",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 31,
+    "nome": "foto 31",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 32,
+    "nome": "foto 32",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 33,
+    "nome": "foto 33",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 34,
+    "nome": "foto 34",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 35,
+    "nome": "foto 35",
+    "tipo": "verticale",
+    "caricata": false
+  },
+  {
+    "numero": 36,
+    "nome": "foto 36",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 37,
+    "nome": "foto 37",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 38,
+    "nome": "foto 38",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 39,
+    "nome": "foto 39",
+    "tipo": "orizzontale",
+    "caricata": false
+  },
+  {
+    "numero": 40,
+    "nome": "foto 40",
+    "tipo": "orizzontale",
+    "caricata": false
+  }
 ]
