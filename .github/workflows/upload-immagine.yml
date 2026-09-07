@@ -134,7 +134,7 @@ jobs:
           print("Lista aggiornata.")
           PY
 
-            - name: Aggiorna lista su Discord
+      - name: Aggiorna lista su Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
