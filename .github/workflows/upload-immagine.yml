@@ -1,49 +1,61 @@
 name: Carica immagine da ZeroTwo
-name: Cancella immagine da ZeroTwo
 
 on:
-repository_dispatch:
+  repository_dispatch:
     types: [upload_immagine]
-    types: [delete_immagine]
 
 permissions:
-contents: write
+  contents: write
 
 jobs:
   carica-immagine:
-  cancella-immagine:
-runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-steps:
-@@ -29,18 +29,20 @@ jobs:
-         with open("lista-foto.json", "r", encoding="utf-8") as f:
-             dati = json.load(f)
+    steps:
+      - name: Scarica repository
+        uses: actions/checkout@v4
 
-          foto = next((x for x in dati if int(x["numero"]) == numero), None)
+      - name: Controlla numero foto
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import sys
+
+          try:
+              numero = int(os.environ["NUMERO"])
+          except:
+              print("ERRORE: numero non valido")
+              sys.exit(1)
+
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
+
           foto = next(
               (x for x in dati if int(x["numero"]) == numero),
               None
           )
 
-         if foto is None:
+          if foto is None:
               print(f"ERRORE: foto numero {numero} non presente in lista-foto.json")
-              print(f"ERRORE: foto numero {numero} non presente nella lista")
-             sys.exit(1)
+              sys.exit(1)
 
           print(f'Foto trovata: {numero}. {foto["nome"]} ({foto["tipo"]})')
-          print(f'Foto trovata: {numero}. {foto["nome"]}')
-         PY
+          PY
 
       - name: Scarica e rinomina immagine
-      - name: Cancella immagine
-env:
+        env:
           IMAGE_URL: ${{ github.event.client_payload.immagine }}
-NUMERO: ${{ github.event.client_payload.numero }}
-run: |
-         set -e
-@@ -50,45 +52,25 @@ jobs:
-           exit 1
-         fi
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          set -e
+
+          if [[ ! "$NUMERO" =~ ^[0-9]+$ ]]; then
+            echo "ERRORE: numero non valido"
+            exit 1
+          fi
 
           curl -fL "$IMAGE_URL" -o immagine_temp
 
@@ -84,37 +96,23 @@ run: |
           echo "Immagine salvata come ${NUMERO}.${EXT}"
 
       - name: Aggiorna lista foto
-          TROVATA=false
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
 
-          for EXT in png jpg jpeg webp gif avif; do
-            FILE="${NUMERO}.${EXT}"
+          numero = int(os.environ["NUMERO"])
 
-            if [ -f "$FILE" ]; then
-              echo "Cancello $FILE"
-              rm -f "$FILE"
-              TROVATA=true
-            fi
-          done
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
 
-          if [ "$TROVATA" = false ]; then
-            echo "ATTENZIONE: nessuna immagine trovata per il numero $NUMERO"
-          else
-            echo "Immagine $NUMERO cancellata."
-          fi
-
-      - name: Imposta foto come non caricata
-env:
-NUMERO: ${{ github.event.client_payload.numero }}
-run: |
-@@ -103,10 +85,26 @@ jobs:
-
-         for foto in dati:
-             if int(foto["numero"]) == numero:
+          for foto in dati:
+              if int(foto["numero"]) == numero:
                   foto["caricata"] = True
-                  foto["caricata"] = False
 
-         with open("lista-foto.json", "w", encoding="utf-8") as f:
-              json.dump(dati, f, ensure_ascii=False, indent=2)
+          with open("lista-foto.json", "w", encoding="utf-8") as f:
               json.dump(
                   dati,
                   f,
@@ -122,52 +120,85 @@ run: |
                   indent=2
               )
 
-          print(f"Foto {numero} impostata come NON CARICATA.")
-          PY
+          verticali = sorted(
+              [x for x in dati if x["tipo"].lower() == "verticale"],
+              key=lambda x: int(x["numero"])
+          )
 
-      - name: Rigenera lista foto
-        run: |
-          python3 <<'PY'
-          import json
+          orizzontali = sorted(
+              [x for x in dati if x["tipo"].lower() == "orizzontale"],
+              key=lambda x: int(x["numero"])
+          )
 
-          with open("lista-foto.json", "r", encoding="utf-8") as f:
-              dati = json.load(f)
+          with open("LISTA_FOTO.md", "w", encoding="utf-8") as f:
+              f.write("# FOTO VERTICALI\n\n")
 
-         verticali = sorted(
-             [x for x in dati if x["tipo"].lower() == "verticale"],
-@@ -119,25 +117,46 @@ jobs:
-         )
-
-         with open("LISTA_FOTO.md", "w", encoding="utf-8") as f:
-
-             f.write("# FOTO VERTICALI\n\n")
-
-             for foto in verticali:
-                 stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+              for foto in verticali:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
                   f.write(f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n')
-                  f.write(
-                      f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n'
-                  )
 
-             f.write("---\n\n")
+              f.write("---\n\n")
+              f.write("# FOTO ORIZZONTALI\n\n")
 
-             f.write("# FOTO ORIZZONTALI\n\n")
-
-             for foto in orizzontali:
-                 stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+              for foto in orizzontali:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
                   f.write(f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n')
-                  f.write(
-                      f'{foto["numero"]}. {foto["nome"]} = {stato}\n\n'
-                  )
 
           print("Lista aggiornata.")
-          print("LISTA_FOTO.md aggiornata.")
-         PY
+          PY
 
-     - name: Aggiorna lista su Discord
-env:
-DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-run: |
+      - name: Salva modifiche nel repository
+        id: salva_upload
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          FOTO=$(find . -maxdepth 1 -type f \( \
+            -name "${NUMERO}.png" -o \
+            -name "${NUMERO}.jpg" -o \
+            -name "${NUMERO}.jpeg" -o \
+            -name "${NUMERO}.webp" -o \
+            -name "${NUMERO}.gif" -o \
+            -name "${NUMERO}.avif" \
+          \) | head -n 1)
+
+          if [ -z "$FOTO" ]; then
+            echo "caricata=false" >> "$GITHUB_OUTPUT"
+            echo "ERRORE: foto ${NUMERO} non trovata."
+            exit 1
+          fi
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "caricata=true" >> "$GITHUB_OUTPUT"
+            echo "Foto già presente e nessuna modifica necessaria."
+            exit 0
+          fi
+
+          git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
+          git push
+
+          git fetch origin main
+
+          if git ls-tree -r origin/main --name-only | grep -Eq "^${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
+            echo "caricata=true" >> "$GITHUB_OUTPUT"
+            echo "Foto ${NUMERO} verificata su GitHub."
+          else
+            echo "caricata=false" >> "$GITHUB_OUTPUT"
+            echo "ERRORE: foto ${NUMERO} non presente su GitHub."
+            exit 1
+          fi
+
+      - name: Aggiorna lista su Discord
+        if: steps.salva_upload.outputs.caricata == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
           set -e
 
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
@@ -175,52 +206,54 @@ run: |
             exit 1
           fi
 
-          if [ ! -f discord-message-id.txt ]; then
-            echo "ERRORE: discord-message-id.txt non trovato"
-            exit 1
-          fi
+          python3 <<'PY'
+          import json
 
-          MESSAGE_ID=$(cat discord-message-id.txt)
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
 
-         python3 <<'PY'
-         import json
+          verticali = sorted(
+              [x for x in dati if x["tipo"].lower() == "verticale"],
+              key=lambda x: int(x["numero"])
+          )
 
-@@ -159,14 +178,15 @@ jobs:
+          orizzontali = sorted(
+              [x for x in dati if x["tipo"].lower() == "orizzontale"],
+              key=lambda x: int(x["numero"])
+          )
 
-             for foto in lista:
-                 stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+          def crea_lista(lista):
+              righe = []
 
-                 righe.append(
-                     f'{foto["numero"]}. {foto["nome"]} = {stato}'
-                 )
+              for foto in lista:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+                  righe.append(
+                      f'{foto["numero"]}. {foto["nome"]} = {stato}'
+                  )
 
-             return "\n".join(righe)
+              return "\n".join(righe)
 
-         payload = {
-              "username": "Lista Foto",
+          payload = {
               "username": "ZeroTwo",
-             "embeds": [
-                 {
-                     "title": "📱 FOTO VERTICALI",
-@@ -180,78 +200,35 @@ jobs:
-         }
+              "embeds": [
+                  {
+                      "title": "📱 FOTO VERTICALI",
+                      "description": crea_lista(verticali)
+                  },
+                  {
+                      "title": "🖥️ FOTO ORIZZONTALI",
+                      "description": crea_lista(orizzontali)
+                  }
+              ]
+          }
 
-         with open("discord-payload.json", "w", encoding="utf-8") as f:
+          with open("discord-payload.json", "w", encoding="utf-8") as f:
               json.dump(payload, f, ensure_ascii=False)
+          PY
 
-              json.dump(
-                  payload,
-                  f,
-                  ensure_ascii=False
-              )
-         PY
-
-          # Se esiste già il messaggio Discord lo modifica
           if [ -f discord-message-id.txt ]; then
 
             MESSAGE_ID=$(cat discord-message-id.txt)
-
-            echo "Aggiorno messaggio Discord: $MESSAGE_ID"
 
             HTTP_CODE=$(curl \
               -sS \
@@ -228,7 +261,7 @@ run: |
               -w "%{http_code}" \
               -X PATCH \
               -H "Content-Type: application/json" \
-              -H "User-Agent: GitHubActions-ListaFoto/1.0" \
+              -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
               --data-binary @discord-payload.json \
               "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}")
 
@@ -236,14 +269,10 @@ run: |
             cat discord-response.txt || true
 
             if [ "$HTTP_CODE" != "200" ]; then
-              echo "ERRORE aggiornamento messaggio Discord"
               exit 1
             fi
 
-          # Se non esiste ancora, crea il primo messaggio
           else
-
-            echo "Creo il messaggio lista su Discord..."
 
             HTTP_CODE=$(curl \
               -sS \
@@ -251,26 +280,14 @@ run: |
               -w "%{http_code}" \
               -X POST \
               -H "Content-Type: application/json" \
-              -H "User-Agent: GitHubActions-ListaFoto/1.0" \
+              -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
               --data-binary @discord-payload.json \
               "${DISCORD_WEBHOOK_URL}?wait=true")
 
             echo "Discord HTTP: $HTTP_CODE"
-          HTTP_CODE=$(curl \
-            -sS \
-            -o discord-response.txt \
-            -w "%{http_code}" \
-            -X PATCH \
-            -H "Content-Type: application/json" \
-            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
-            --data-binary @discord-payload.json \
-            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}")
-
             cat discord-response.json || true
-          echo "Discord HTTP: $HTTP_CODE"
 
             if [ "$HTTP_CODE" != "200" ]; then
-              echo "ERRORE creazione messaggio Discord"
               exit 1
             fi
 
@@ -285,31 +302,50 @@ run: |
           with open("discord-message-id.txt", "w", encoding="utf-8") as f:
               f.write(message_id)
 
-          print("ID messaggio Discord salvato:", message_id)
+          print("ID messaggio Discord:", message_id)
           PY
-          cat discord-response.txt || true
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo ""
-            echo "ERRORE aggiornamento lista Discord"
-            exit 1
-         fi
+          fi
 
-         rm -f discord-payload.json
-         rm -f discord-response.txt
+          rm -f discord-payload.json
+          rm -f discord-response.txt
           rm -f discord-response.json
 
-     - name: Salva modifiche nel repository
-env:
-@@ -263,9 +240,9 @@ jobs:
-         git add -A
+      - name: Salva ID messaggio Discord
+        if: steps.salva_upload.outputs.caricata == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-         if git diff --cached --quiet; then
-            echo "Nessuna modifica."
-            echo "Nessuna modifica da salvare."
-           exit 0
-         fi
+          git add discord-message-id.txt 2>/dev/null || true
 
-          git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
-          git commit -m "Cancellata foto ${NUMERO}"
-         git push
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          git commit -m "Salvato ID messaggio Discord"
+          git push
+
+      - name: Conferma caricamento riuscito su Discord
+        if: always() && steps.salva_upload.outputs.caricata == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          curl --fail-with-body -sS \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+            -d "{\"content\":\"✅ **Foto ${NUMERO} caricata correttamente su GitHub.**\"}" \
+            "$DISCORD_WEBHOOK_URL"
+
+      - name: Conferma caricamento fallito su Discord
+        if: always() && steps.salva_upload.outputs.caricata != 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          curl --fail-with-body -sS \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+            -d "{\"content\":\"❌ **ERRORE: la foto ${NUMERO} NON è stata caricata su GitHub.** Controlla GitHub Actions.\"}" \
+            "$DISCORD_WEBHOOK_URL"
