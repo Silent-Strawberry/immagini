@@ -135,14 +135,14 @@ jobs:
 
               for foto in verticali:
                   stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-                  f.write(f'**{foto["numero"]}.** {foto["nome"]} = {stato}\n\n')
+                  f.write(f'- **Foto {foto["numero"]}** — {foto["nome"]} = {stato}\n\n')
 
               f.write("---\n\n")
               f.write("# FOTO ORIZZONTALI\n\n")
 
               for foto in orizzontali:
                   stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-                  f.write(f'**{foto["numero"]}.** {foto["nome"]} = {stato}\n\n')
+                  f.write(f'- **Foto {foto["numero"]}** — {foto["nome"]} = {stato}\n\n')
 
           print("Lista aggiornata.")
           PY
