@@ -228,8 +228,9 @@ jobs:
               for foto in lista:
                   stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
                   righe.append(
-                      f'{foto["numero"]}. {foto["nome"]} = {stato}'
-                  )
+                      righe.append(
+                      f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
+                      )
 
               return "\n".join(righe)
 
