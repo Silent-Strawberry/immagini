@@ -2,7 +2,7 @@
 
 2. foto 2 = ❌ non caricata
 
-3. foto 3 = ✅ caricata
+3. foto 3 = ❌ non caricata
 
 5. foto 5 = ❌ non caricata
 
