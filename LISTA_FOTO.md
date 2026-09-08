@@ -1,6 +1,6 @@
 # FOTO VERTICALI
 
-2. foto 2 = ✅ caricata
+2. foto 2 = ❌ non caricata
 
 3. foto 3 = ❌ non caricata
 
