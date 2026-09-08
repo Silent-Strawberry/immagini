@@ -40,7 +40,7 @@ jobs:
 
                   righe.append(
                       righe.append(
-                      f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
+                          f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
                       )
 
               return "\n".join(righe)
