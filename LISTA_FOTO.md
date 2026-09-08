@@ -6,7 +6,7 @@
 
 5. da inserire la posizione della foto = ❌ non caricata
 
-6. da inserire la posizione della foto = ✅ caricata
+6. da inserire la posizione della foto = ❌ non caricata
 
 8. da inserire la posizione della foto = ❌ non caricata
 
