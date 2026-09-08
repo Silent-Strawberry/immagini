@@ -3,7 +3,9 @@
 2. da inserire la posizione della foto = ❌ non caricata
 
 3. da inserire la posizione della foto = ❌ non caricata
+
 5. da inserire la posizione della foto = ❌ non caricata
+
 6. da inserire la posizione della foto = ✅ caricata
 
 8. da inserire la posizione della foto = ❌ non caricata
