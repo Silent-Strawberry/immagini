@@ -1,0 +1,123 @@
+name: Pubblica lista foto su Discord
+
+on:
+  repository_dispatch:
+    types: [lista_foto]
+
+  workflow_dispatch:
+
+jobs:
+  pubblica-lista:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scarica repository
+        uses: actions/checkout@v4
+
+      - name: Crea lista Discord
+        run: |
+          python3 <<'PY'
+          import json
+
+          with open("lista-foto.json", "r", encoding="utf-8") as f:
+              dati = json.load(f)
+
+          verticali = sorted(
+              [x for x in dati if x["tipo"].lower() == "verticale"],
+              key=lambda x: int(x["numero"])
+          )
+
+          orizzontali = sorted(
+              [x for x in dati if x["tipo"].lower() == "orizzontale"],
+              key=lambda x: int(x["numero"])
+          )
+
+          def crea_lista(lista):
+              righe = []
+
+              for foto in lista:
+                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+
+                  righe.append(
+                      f'{foto["numero"]}. {foto["nome"]} = {stato}'
+                  )
+
+              return "\n".join(righe)
+
+          verticali_caricate = sum(
+              1 for x in verticali if x["caricata"]
+          )
+
+          orizzontali_caricate = sum(
+              1 for x in orizzontali if x["caricata"]
+          )
+
+          totale_caricate = sum(
+              1 for x in dati if x["caricata"]
+          )
+
+          payload = {
+              "username": "ZeroTwo",
+              "embeds": [
+                  {
+                      "title": "📸 LISTA FOTO",
+                      "description": (
+                          f"**Totale:** {totale_caricate}/{len(dati)} caricate\n"
+                          f"**Verticali:** {verticali_caricate}/{len(verticali)}\n"
+                          f"**Orizzontali:** {orizzontali_caricate}/{len(orizzontali)}"
+                      )
+                  },
+                  {
+                      "title": "📱 FOTO VERTICALI",
+                      "description": crea_lista(verticali)
+                  },
+                  {
+                      "title": "🖥️ FOTO ORIZZONTALI",
+                      "description": crea_lista(orizzontali)
+                  }
+              ]
+          }
+
+          with open(
+              "discord-payload.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+              json.dump(
+                  payload,
+                  f,
+                  ensure_ascii=False
+              )
+          PY
+
+      - name: Pubblica lista su Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -e
+
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "ERRORE: DISCORD_WEBHOOK_URL non configurato"
+            exit 1
+          fi
+
+          HTTP_CODE=$(curl \
+            -sS \
+            -o discord-response.json \
+            -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+            --data-binary @discord-payload.json \
+            "${DISCORD_WEBHOOK_URL}?wait=true")
+
+          echo "Discord HTTP: $HTTP_CODE"
+
+          cat discord-response.json || true
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERRORE: impossibile pubblicare la lista su Discord"
+            exit 1
+          fi
+
+          echo "Lista pubblicata correttamente su Discord."
