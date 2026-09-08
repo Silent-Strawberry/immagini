@@ -246,3 +246,43 @@ jobs:
 
           git commit -m "Cancellata foto ${NUMERO}"
           git push
+
+            - name: Verifica foto caricata su GitHub
+        id: verifica_upload
+        if: always()
+        env:
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          git fetch origin main
+
+          if git ls-tree -r origin/main --name-only | grep -Eq "^${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
+            echo "caricata=true" >> "$GITHUB_OUTPUT"
+            echo "Foto ${NUMERO} presente realmente su GitHub."
+          else
+            echo "caricata=false" >> "$GITHUB_OUTPUT"
+            echo "Foto ${NUMERO} NON trovata su GitHub."
+          fi
+
+      - name: Conferma caricamento riuscito su Discord
+        if: always() && steps.verifica_upload.outputs.caricata == 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          curl -sS \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+            -d "{\"content\":\"✅ **Foto ${NUMERO} caricata correttamente su GitHub.**\"}" \
+            "$DISCORD_WEBHOOK_URL"
+
+      - name: Conferma caricamento fallito su Discord
+        if: always() && steps.verifica_upload.outputs.caricata != 'true'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NUMERO: ${{ github.event.client_payload.numero }}
+        run: |
+          curl -sS \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+            -d "{\"content\":\"❌ **ERRORE: foto ${NUMERO} NON caricata su GitHub.** Controlla GitHub Actions.\"}" \
+            "$DISCORD_WEBHOOK_URL"
