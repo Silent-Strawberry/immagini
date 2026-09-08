@@ -6,7 +6,7 @@
 
 5. foto 5 = ❌ non caricata
 
-6. foto 6 = ❌ non caricata
+6. foto 6 = ✅ caricata
 
 8. foto 8 = ❌ non caricata
 
