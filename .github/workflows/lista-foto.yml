@@ -22,60 +22,52 @@ jobs:
           with open("lista-foto.json", "r", encoding="utf-8") as f:
               dati = json.load(f)
 
-          verticali = sorted(
-              [x for x in dati if x["tipo"].lower() == "verticale"],
+          dati = sorted(
+              dati,
               key=lambda x: int(x["numero"])
           )
 
-          orizzontali = sorted(
-              [x for x in dati if x["tipo"].lower() == "orizzontale"],
-              key=lambda x: int(x["numero"])
-          )
+          righe = []
 
-          def crea_lista(lista):
-              righe = []
+          for foto in dati:
+              stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
 
-              for foto in lista:
-                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-
-                  righe.append(
-                      f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
-                  )
-
-              return "\n".join(righe)
-
-          verticali_caricate = sum(
-              1 for x in verticali if x["caricata"]
-          )
-
-          orizzontali_caricate = sum(
-              1 for x in orizzontali if x["caricata"]
-          )
+              righe.append(
+                  f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
+              )
 
           totale_caricate = sum(
-              1 for x in dati if x["caricata"]
+              1 for foto in dati
+              if foto["caricata"]
           )
+
+          embeds = [
+              {
+                  "title": "📸 LISTA FOTO",
+                  "description": (
+                      f"**Totale foto:** {len(dati)}\n"
+                      f"**Caricate:** {totale_caricate}\n"
+                      f"**Non caricate:** {len(dati) - totale_caricate}"
+                  )
+              }
+          ]
+
+          dimensione = 20
+
+          for i in range(0, len(righe), dimensione):
+              inizio = i + 1
+              fine = min(i + dimensione, len(righe))
+
+              embeds.append({
+                  "title": f"📋 FOTO {inizio} - {fine}",
+                  "description": "\n".join(
+                      righe[i:i + dimensione]
+                  )
+              })
 
           payload = {
               "username": "ZeroTwo",
-              "embeds": [
-                  {
-                      "title": "📸 LISTA FOTO",
-                      "description": (
-                          f"**Totale:** {totale_caricate}/{len(dati)} caricate\n"
-                          f"**Verticali:** {verticali_caricate}/{len(verticali)}\n"
-                          f"**Orizzontali:** {orizzontali_caricate}/{len(orizzontali)}"
-                      )
-                  },
-                  {
-                      "title": "📱 FOTO VERTICALI",
-                      "description": crea_lista(verticali)
-                  },
-                  {
-                      "title": "🖥️ FOTO ORIZZONTALI",
-                      "description": crea_lista(orizzontali)
-                  }
-              ]
+              "embeds": embeds
           }
 
           with open(
@@ -121,3 +113,6 @@ jobs:
           fi
 
           echo "Lista pubblicata correttamente su Discord."
+
+          rm -f discord-payload.json
+          rm -f discord-response.json
