@@ -19,6 +19,8 @@ jobs:
           python3 <<'PY'
           import json
 
+          COLORE = int("ff004f", 16)
+
           with open("lista-foto.json", "r", encoding="utf-8") as f:
               dati = json.load(f)
 
@@ -42,7 +44,7 @@ jobs:
                           f"**Caricate:** {totale_caricate}\n"
                           f"**Non caricate:** {len(dati) - totale_caricate}"
                       ),
-                      "color": 16732043
+                      "color": COLORE
                   }
               ]
           }
@@ -87,7 +89,7 @@ jobs:
                       {
                           "title": f"📋 FOTO {inizio} - {fine}",
                           "description": "\n".join(righe),
-                          "color": 16732043
+                          "color": COLORE
                       }
                   ]
               }
