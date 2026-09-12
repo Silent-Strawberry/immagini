@@ -59,13 +59,23 @@ jobs:
           TROVATA=false
 
           for EXT in png jpg jpeg webp gif avif; do
-            FILE="${NUMERO}.${EXT}"
+
+            FILE="immagini/${NUMERO}.${EXT}"
 
             if [ -f "$FILE" ]; then
               echo "Cancello: $FILE"
               rm -f "$FILE"
               TROVATA=true
             fi
+
+            OLD_FILE="${NUMERO}.${EXT}"
+
+            if [ -f "$OLD_FILE" ]; then
+              echo "Cancello vecchia immagine: $OLD_FILE"
+              rm -f "$OLD_FILE"
+              TROVATA=true
+            fi
+
           done
 
           if [ "$TROVATA" = false ]; then
@@ -135,7 +145,7 @@ jobs:
             exit 1
           fi
 
-          git commit -m "Cancellata foto ${NUMERO} e aggiornata lista"
+          git commit -m "Cancellata foto ${NUMERO} dalla cartella immagini"
           git push
 
       - name: Verifica foto cancellata da GitHub
@@ -147,7 +157,7 @@ jobs:
 
           git fetch origin main
 
-          if git ls-tree -r origin/main --name-only | grep -Eq "^${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
+          if git ls-tree -r origin/main --name-only | grep -Eq "^(immagini/)?${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
             echo "cancellata=false" >> "$GITHUB_OUTPUT"
             echo "ERRORE: foto ${NUMERO} ancora presente su GitHub."
             exit 1
@@ -319,7 +329,7 @@ jobs:
           curl --fail-with-body -sS \
             -H "Content-Type: application/json" \
             -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
-            -d "{\"content\":\"🗑️ **Foto ${NUMERO} cancellata correttamente da GitHub.**\"}" \
+            -d "{\"content\":\"🗑️ **Foto ${NUMERO} cancellata correttamente dalla cartella immagini su GitHub.**\"}" \
             "$DISCORD_WEBHOOK_URL"
 
       - name: Conferma cancellazione fallita
