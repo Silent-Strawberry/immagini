@@ -42,7 +42,7 @@ jobs:
               print(f"ERRORE: foto numero {numero} non presente in lista-foto.json")
               sys.exit(1)
 
-          print(f'Foto trovata: {numero}. {foto["nome"]} ({foto["tipo"]})')
+          print(f'Foto trovata: {numero}. {foto["nome"]}')
           PY
 
       - name: Scarica e rinomina immagine
@@ -112,6 +112,11 @@ jobs:
               if int(foto["numero"]) == numero:
                   foto["caricata"] = True
 
+          dati = sorted(
+              dati,
+              key=lambda x: int(x["numero"])
+          )
+
           with open("lista-foto.json", "w", encoding="utf-8") as f:
               json.dump(
                   dati,
@@ -120,31 +125,18 @@ jobs:
                   indent=2
               )
 
-          verticali = sorted(
-              [x for x in dati if x["tipo"].lower() == "verticale"],
-              key=lambda x: int(x["numero"])
-          )
-
-          orizzontali = sorted(
-              [x for x in dati if x["tipo"].lower() == "orizzontale"],
-              key=lambda x: int(x["numero"])
-          )
-
           with open("LISTA_FOTO.md", "w", encoding="utf-8") as f:
-              f.write("# FOTO VERTICALI\n\n")
+              f.write("# LISTA FOTO\n\n")
 
-              for foto in verticali:
+              for foto in dati:
                   stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-                  f.write(f'- **Foto {foto["numero"]}** — {foto["nome"]} = {stato}\n\n')
 
-              f.write("---\n\n")
-              f.write("# FOTO ORIZZONTALI\n\n")
+                  f.write(
+                      f'- **Foto {foto["numero"]}** — '
+                      f'{foto["nome"]} = {stato}\n\n'
+                  )
 
-              for foto in orizzontali:
-                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-                  f.write(f'- **Foto {foto["numero"]}** — {foto["nome"]} = {stato}\n\n')
-
-          print("Lista aggiornata.")
+          print(f"Foto {numero} impostata come caricata.")
           PY
 
       - name: Salva modifiche nel repository
@@ -175,13 +167,11 @@ jobs:
           git add -A
 
           if git diff --cached --quiet; then
-            echo "caricata=true" >> "$GITHUB_OUTPUT"
-            echo "Foto già presente e nessuna modifica necessaria."
-            exit 0
+            echo "Nessuna modifica necessaria."
+          else
+            git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
+            git push
           fi
-
-          git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
-          git push
 
           git fetch origin main
 
@@ -212,44 +202,64 @@ jobs:
           with open("lista-foto.json", "r", encoding="utf-8") as f:
               dati = json.load(f)
 
-          verticali = sorted(
-              [x for x in dati if x["tipo"].lower() == "verticale"],
+          dati = sorted(
+              dati,
               key=lambda x: int(x["numero"])
           )
 
-          orizzontali = sorted(
-              [x for x in dati if x["tipo"].lower() == "orizzontale"],
-              key=lambda x: int(x["numero"])
+          righe = []
+
+          for foto in dati:
+              stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
+
+              righe.append(
+                  f'**Foto {foto["numero"]}** — '
+                  f'{foto["nome"]} = {stato}'
+              )
+
+          totale_caricate = sum(
+              1 for foto in dati
+              if foto["caricata"]
           )
 
-          def crea_lista(lista):
-              righe = []
+          embeds = [
+              {
+                  "title": "📸 LISTA FOTO",
+                  "description": (
+                      f"**Totale:** "
+                      f"{totale_caricate}/{len(dati)} caricate"
+                  )
+              }
+          ]
 
-              for foto in lista:
-                  stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-                  righe.append(
-                      righe.append(
-                          f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
-                      )
+          dimensione = 25
 
-              return "\n".join(righe)
+          for i in range(0, len(righe), dimensione):
+              inizio = i + 1
+              fine = min(i + dimensione, len(righe))
+
+              embeds.append({
+                  "title": f"📋 FOTO {inizio} - {fine}",
+                  "description": "\n".join(
+                      righe[i:i + dimensione]
+                  )
+              })
 
           payload = {
               "username": "ZeroTwo",
-              "embeds": [
-                  {
-                      "title": "📱 FOTO VERTICALI",
-                      "description": crea_lista(verticali)
-                  },
-                  {
-                      "title": "🖥️ FOTO ORIZZONTALI",
-                      "description": crea_lista(orizzontali)
-                  }
-              ]
+              "embeds": embeds
           }
 
-          with open("discord-payload.json", "w", encoding="utf-8") as f:
-              json.dump(payload, f, ensure_ascii=False)
+          with open(
+              "discord-payload.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+              json.dump(
+                  payload,
+                  f,
+                  ensure_ascii=False
+              )
           PY
 
           if [ -f discord-message-id.txt ]; then
