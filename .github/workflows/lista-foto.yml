@@ -42,7 +42,7 @@ jobs:
                           f"**Caricate:** {totale_caricate}\n"
                           f"**Non caricate:** {len(dati) - totale_caricate}"
                       ),
-                      "color": 16711759
+                      "color": 16732043
                   }
               ]
           }
@@ -87,7 +87,7 @@ jobs:
                       {
                           "title": f"📋 FOTO {inizio} - {fine}",
                           "description": "\n".join(righe),
-                          "color": 16711759
+                          "color": 16732043
                       }
                   ]
               }
