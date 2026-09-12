@@ -45,6 +45,19 @@ jobs:
           print(f'Foto trovata: {numero}. {foto["nome"]}')
           PY
 
+      - name: Prepara cartella immagini
+        run: |
+          mkdir -p immagini
+
+          for FILE in *.png *.jpg *.jpeg *.webp *.gif *.avif; do
+            if [ -f "$FILE" ]; then
+              if [[ "$FILE" =~ ^[0-9]+\.(png|jpg|jpeg|webp|gif|avif)$ ]]; then
+                echo "Sposto $FILE in immagini/"
+                mv "$FILE" "immagini/$FILE"
+              fi
+            fi
+          done
+
       - name: Scarica e rinomina immagine
         env:
           IMAGE_URL: ${{ github.event.client_payload.immagine }}
@@ -84,16 +97,18 @@ jobs:
               ;;
           esac
 
-          rm -f "${NUMERO}.png"
-          rm -f "${NUMERO}.jpg"
-          rm -f "${NUMERO}.jpeg"
-          rm -f "${NUMERO}.webp"
-          rm -f "${NUMERO}.gif"
-          rm -f "${NUMERO}.avif"
+          mkdir -p immagini
 
-          mv immagine_temp "${NUMERO}.${EXT}"
+          rm -f "immagini/${NUMERO}.png"
+          rm -f "immagini/${NUMERO}.jpg"
+          rm -f "immagini/${NUMERO}.jpeg"
+          rm -f "immagini/${NUMERO}.webp"
+          rm -f "immagini/${NUMERO}.gif"
+          rm -f "immagini/${NUMERO}.avif"
 
-          echo "Immagine salvata come ${NUMERO}.${EXT}"
+          mv immagine_temp "immagini/${NUMERO}.${EXT}"
+
+          echo "Immagine salvata come immagini/${NUMERO}.${EXT}"
 
       - name: Aggiorna lista foto
         env:
@@ -149,7 +164,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          FOTO=$(find . -maxdepth 1 -type f \( \
+          FOTO=$(find immagini -maxdepth 1 -type f \( \
             -name "${NUMERO}.png" -o \
             -name "${NUMERO}.jpg" -o \
             -name "${NUMERO}.jpeg" -o \
@@ -160,7 +175,7 @@ jobs:
 
           if [ -z "$FOTO" ]; then
             echo "caricata=false" >> "$GITHUB_OUTPUT"
-            echo "ERRORE: foto ${NUMERO} non trovata."
+            echo "ERRORE: foto ${NUMERO} non trovata nella cartella immagini."
             exit 1
           fi
 
@@ -169,18 +184,18 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nessuna modifica necessaria."
           else
-            git commit -m "Caricata foto ${NUMERO} e aggiornata lista"
+            git commit -m "Caricata foto ${NUMERO} nella cartella immagini"
             git push
           fi
 
           git fetch origin main
 
-          if git ls-tree -r origin/main --name-only | grep -Eq "^${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
+          if git ls-tree -r origin/main --name-only | grep -Eq "^immagini/${NUMERO}\.(png|jpg|jpeg|webp|gif|avif)$"; then
             echo "caricata=true" >> "$GITHUB_OUTPUT"
-            echo "Foto ${NUMERO} verificata su GitHub."
+            echo "Foto ${NUMERO} verificata su GitHub nella cartella immagini."
           else
             echo "caricata=false" >> "$GITHUB_OUTPUT"
-            echo "ERRORE: foto ${NUMERO} non presente su GitHub."
+            echo "ERRORE: foto ${NUMERO} non presente nella cartella immagini su GitHub."
             exit 1
           fi
 
@@ -346,7 +361,7 @@ jobs:
           curl --fail-with-body -sS \
             -H "Content-Type: application/json" \
             -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
-            -d "{\"content\":\"✅ **Foto ${NUMERO} caricata correttamente su GitHub.**\"}" \
+            -d "{\"content\":\"✅ **Foto ${NUMERO} caricata correttamente su GitHub nella cartella immagini.**\"}" \
             "$DISCORD_WEBHOOK_URL"
 
       - name: Conferma caricamento fallito su Discord
