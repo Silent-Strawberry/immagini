@@ -124,7 +124,7 @@
 
 - **Foto 62** — da inserire la posizione della foto = ❌ non caricata
 
-- **Foto 63** — da inserire la posizione della foto = ✅ caricata
+- **Foto 63** — da inserire la posizione della foto = ❌ non caricata
 
 - **Foto 64** — da inserire la posizione della foto = ❌ non caricata
 
