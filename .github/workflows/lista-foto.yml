@@ -27,59 +27,82 @@ jobs:
               key=lambda x: int(x["numero"])
           )
 
-          righe = []
-
-          for foto in dati:
-              stato = "✅ caricata" if foto["caricata"] else "❌ non caricata"
-
-              righe.append(
-                  f'**Foto {foto["numero"]}** — {foto["nome"]} = {stato}'
-              )
-
           totale_caricate = sum(
               1 for foto in dati
               if foto["caricata"]
           )
 
-          embeds = [
-              {
-                  "title": "📸 LISTA FOTO",
-                  "description": (
-                      f"**Totale foto:** {len(dati)}\n"
-                      f"**Caricate:** {totale_caricate}\n"
-                      f"**Non caricate:** {len(dati) - totale_caricate}"
-                  )
-              }
-          ]
-
-          dimensione = 20
-
-          for i in range(0, len(righe), dimensione):
-              inizio = i + 1
-              fine = min(i + dimensione, len(righe))
-
-              embeds.append({
-                  "title": f"📋 FOTO {inizio} - {fine}",
-                  "description": "\n".join(
-                      righe[i:i + dimensione]
-                  )
-              })
-
-          payload = {
+          riepilogo = {
               "username": "ZeroTwo",
-              "embeds": embeds
+              "embeds": [
+                  {
+                      "title": "📸 LISTA FOTO",
+                      "description": (
+                          f"**Totale foto:** {len(dati)}\n"
+                          f"**Caricate:** {totale_caricate}\n"
+                          f"**Non caricate:** {len(dati) - totale_caricate}"
+                      )
+                  }
+              ]
           }
 
           with open(
-              "discord-payload.json",
+              "discord-riepilogo.json",
               "w",
               encoding="utf-8"
           ) as f:
               json.dump(
-                  payload,
+                  riepilogo,
                   f,
                   ensure_ascii=False
               )
+
+          dimensione = 20
+
+          for i in range(0, len(dati), dimensione):
+
+              gruppo = dati[i:i + dimensione]
+
+              righe = []
+
+              for foto in gruppo:
+                  stato = (
+                      "✅ caricata"
+                      if foto["caricata"]
+                      else "❌ non caricata"
+                  )
+
+                  righe.append(
+                      f'**Foto {foto["numero"]}** — '
+                      f'{foto["nome"]} = {stato}'
+                  )
+
+              inizio = gruppo[0]["numero"]
+              fine = gruppo[-1]["numero"]
+
+              payload = {
+                  "username": "ZeroTwo",
+                  "embeds": [
+                      {
+                          "title": f"📋 FOTO {inizio} - {fine}",
+                          "description": "\n".join(righe)
+                      }
+                  ]
+              }
+
+              numero_file = (i // dimensione) + 1
+
+              with open(
+                  f"discord-lista-{numero_file}.json",
+                  "w",
+                  encoding="utf-8"
+              ) as f:
+                  json.dump(
+                      payload,
+                      f,
+                      ensure_ascii=False
+                  )
+
           PY
 
       - name: Pubblica lista su Discord
@@ -100,19 +123,43 @@ jobs:
             -X POST \
             -H "Content-Type: application/json" \
             -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
-            --data-binary @discord-payload.json \
+            --data-binary @discord-riepilogo.json \
             "${DISCORD_WEBHOOK_URL}?wait=true")
 
-          echo "Discord HTTP: $HTTP_CODE"
-
-          cat discord-response.json || true
+          echo "Riepilogo Discord HTTP: $HTTP_CODE"
 
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "ERRORE: impossibile pubblicare la lista su Discord"
+            cat discord-response.json || true
+            echo "ERRORE pubblicazione riepilogo"
             exit 1
           fi
 
+          for FILE in discord-lista-*.json; do
+
+            echo "Invio $FILE"
+
+            HTTP_CODE=$(curl \
+              -sS \
+              -o discord-response.json \
+              -w "%{http_code}" \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -H "User-Agent: ZeroTwo-GitHubActions/1.0" \
+              --data-binary @"$FILE" \
+              "${DISCORD_WEBHOOK_URL}?wait=true")
+
+            echo "Discord HTTP: $HTTP_CODE"
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              cat discord-response.json || true
+              echo "ERRORE pubblicazione $FILE"
+              exit 1
+            fi
+
+          done
+
           echo "Lista pubblicata correttamente su Discord."
 
-          rm -f discord-payload.json
+          rm -f discord-riepilogo.json
+          rm -f discord-lista-*.json
           rm -f discord-response.json
